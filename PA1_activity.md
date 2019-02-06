@@ -47,15 +47,13 @@ library(lubridate)
 ##     date
 ```
 
-Here is my code to load the data: 
+#### 1 & 2. Here is my code to load and process the data: 
 
 
 ```r
 setwd("C:/Users/207014104/Desktop/DataScience/Reproduceable Research/Project1/repdata_data_activity")
 
 fileName <- "activity.csv"
-
-#gitDataUrl <- "https://github.com/shkaht/RepData_PeerAssessment1/blob/master/activity.zip"
 
 #read the csv once it has been unzipped in the working directory
 activity <- as_tibble(read.csv(fileName))
@@ -64,7 +62,7 @@ activity <- as_tibble(read.csv(fileName))
 
 ## What is mean total number of steps taken per day?
 
-1. Calculate the total number of steps taken per day
+#### 1. Calculate the total number of steps taken per day
 
 
 ```r
@@ -90,7 +88,7 @@ print(dailySteps)
 ## # ... with 51 more rows
 ```
 
-2. Make a histogram of the total number of steps taken each day
+#### 2. Make a histogram of the total number of steps taken each day
 
 
 ```r
@@ -98,7 +96,10 @@ ggplot(dailySteps, aes(x = totalSteps)) +
         geom_histogram(binwidth = 2500, #set bins to width of 2500 steps
                        fill = "white", #make the fill of bars white
                        color = "black" #make outline of bars black
-                       )
+                       ) +
+        labs(title = "Histogram of total steps each day (missing values omitted)", 
+             x = "Count of days", 
+             y = "Number of steps per day") 
 ```
 
 ```
@@ -107,26 +108,26 @@ ggplot(dailySteps, aes(x = totalSteps)) +
 
 ![](PA1_activity_files/figure-html/unnamed-chunk-4-1.png)<!-- -->
 
-3. Calculate and report the mean and median of the total number of steps taken per day
+#### 3. Calculate and report the mean and median of the total number of steps taken per day
 
 
 ```r
 meanOriginal <- mean(dailySteps$totalSteps, na.rm = TRUE)
 medianOriginal <- median(dailySteps$totalSteps, na.rm = TRUE)
 
-print(meanOriginal)
+cat("The mean is:", meanOriginal)
 ```
 
 ```
-## [1] 10766.19
+## The mean is: 10766.19
 ```
 
 ```r
-print(medianOriginal)
+cat("The median is:", medianOriginal)
 ```
 
 ```
-## [1] 10765
+## The median is: 10765
 ```
 
 ## What is the average daily activity pattern?
@@ -140,7 +141,10 @@ dailyProfile <- group_by(activity, interval) %>%
         summarize(intervalSteps = mean(steps, na.rm=TRUE))
 
 # plot the 
-ggplot(dailyProfile, aes(x = interval, y = intervalSteps)) + geom_line()
+ggplot(dailyProfile, aes(x = interval, y = intervalSteps)) + geom_line(size = 1) +
+        labs(title = "Timeseries plot of average steps taken", 
+             x = "5-minute interval", 
+             y = "Average steps")
 ```
 
 ![](PA1_activity_files/figure-html/unnamed-chunk-6-1.png)<!-- -->
@@ -149,7 +153,8 @@ ggplot(dailyProfile, aes(x = interval, y = intervalSteps)) + geom_line()
 
 
 ```r
-dailyProfile[which.max(dailyProfile$intervalSteps),]
+max <- dailyProfile[which.max(dailyProfile$intervalSteps),]
+print(max)
 ```
 
 ```
@@ -159,9 +164,17 @@ dailyProfile[which.max(dailyProfile$intervalSteps),]
 ## 1      835          206.
 ```
 
+```r
+cat("The interval with the max average number of steps is", max$interval)
+```
+
+```
+## The interval with the max average number of steps is 835
+```
+
 ## Imputing missing values
 
-1. Calculate and report the total missing values in the dataset
+#### 1. Calculate and report the total missing values in the dataset
 
 
 ```r
@@ -178,27 +191,30 @@ summary(is.na(activity))
 
 ```r
 #calculate the number of NA rows by subtracting the complete cases from total number of rows
-nrow(activity) - sum(complete.cases(activity))
+missing <- nrow(activity) - sum(complete.cases(activity))
+
+cat("Total missing values:", missing)
 ```
 
 ```
-## [1] 2304
+## Total missing values: 2304
 ```
 
 ```r
 #what % of the total values for steps is NA
-mean(is.na(activity$steps))
+portion <- mean(is.na(activity$steps))
+cat(missing, "is", portion, "of total measurements")
 ```
 
 ```
-## [1] 0.1311475
+## 2304 is 0.1311475 of total measurements
 ```
 
-2. Devise a strategy for filling in the missing values. 
+#### 2. Devise a strategy for filling in the missing values. 
 
 My approach is to fill the mean value for the corresponding interval for each NA, using the summary data calculated above for dailyProfile
 
-3. Create a new dataset that is equal to the original but with missing data filled in
+#### 3. Create a new dataset that is equal to the original but with missing data filled in
 
 
 ```r
@@ -231,7 +247,7 @@ print(filled)
 ## # ... with 17,558 more rows
 ```
 
-4. Make a histogram of the total number of steps taken each day with the filled NA data; and calculate the new mean and median
+#### 4. Make a histogram of the total number of steps taken each day with the filled NA data; and calculate the new mean and median
 
 
 ```r
@@ -262,7 +278,11 @@ ggplot(dailySteps2, aes(x = totalSteps)) +
         geom_histogram(binwidth = 2500, #set bins to width of 2500 steps
                        fill = "white", #make the fill of bars white
                        color = "black" #make outline of bars black
-                       )
+                       ) +
+        labs(title = "Histogram of total steps each day 
+             (missing values filled w/ hourly mean)", 
+             x = "Count of days", 
+             y = "Number of steps per day") 
 ```
 
 ![](PA1_activity_files/figure-html/unnamed-chunk-10-1.png)<!-- -->
@@ -272,47 +292,47 @@ ggplot(dailySteps2, aes(x = totalSteps)) +
 meanFilled <- mean(dailySteps2$totalSteps, na.rm = FALSE)
 medianFilled <- median(dailySteps2$totalSteps, na.rm = FALSE)
 
-print(meanFilled)
+cat("The new mean value is:", meanFilled)
 ```
 
 ```
-## [1] 10766.19
-```
-
-```r
-print(medianFilled)
-```
-
-```
-## [1] 10766.19
-```
-Do these values differ from the estimates from the first part of the assignment? What is the impact of imputing missing data on the estimates of the total daily number of steps?
-
-
-```r
-print(meanOriginal)
-```
-
-```
-## [1] 10766.19
+## The new mean value is: 10766.19
 ```
 
 ```r
-print(medianOriginal)
+cat("The new median value is:", medianFilled)
 ```
 
 ```
-## [1] 10765
+## The new median value is: 10766.19
+```
+#### Do these values differ from the estimates from the first part of the assignment? What is the impact of imputing missing data on the estimates of the total daily number of steps?
+
+
+```r
+cat("The original mean value was:", meanOriginal)
+```
+
+```
+## The original mean value was: 10766.19
+```
+
+```r
+cat("The original mean value was:", medianOriginal)
+```
+
+```
+## The original mean value was: 10765
 ```
 
 You can see that the mean remains the same.  
-The median, however is slightly higher and now equal to the mean. 
+The median, however is slightly larger and now equal to the mean. 
 
-Imputing the missing data can contribute bias to the results as measurements are now counted as more than a single reading.  Any error in the mean values will be increased by weighting it more heavily. 
+Imputing the missing data can contribute bias to the results because measurements are now counted as more than a single reading.  Any error in the mean values will be increased by weighting it more heavily. 
 
 ## Are there differences in activity patterns between weekdays and weekends?
 
-Create a new factor variable in the dataset with 2 levels: "weekday" and "weekend"
+#### 1. Create a new factor variable in the dataset with 2 levels: "weekday" and "weekend"
 
 
 ```r
@@ -348,17 +368,22 @@ print(filled)
 ## # ... with 17,558 more rows
 ```
 
-Make a panel plot containing a timeseries plot of the 5-min interval and the average number of steps taken for weekdays and weekends
+#### 2. Make a panel plot containing a timeseries plot of the 5-min interval and the average number of steps taken for weekdays and weekends
 
 
 ```r
 wkdayEnd <- group_by(filled, weekend, interval) %>%
         summarize(avg = mean(steps))
 
-panel <- ggplot(wkdayEnd, aes(x = interval, y = avg)) + 
+panel <- ggplot(wkdayEnd, aes(x = interval, y = avg, color=weekend)) + 
         facet_grid(weekend ~ .) + 
-        geom_line()
-
+        geom_line(size = 1) +
+        labs(title = "Timeseries plot of average steps taken on weekends and weekdays", 
+             x = "5-minute interval", 
+             y = "Average steps") +
+        theme(legend.position="top") +
+        theme(legend.title=element_blank())
+        
 plot(panel)
 ```
 
